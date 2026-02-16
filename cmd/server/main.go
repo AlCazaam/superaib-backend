@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"superaib/internal/api/handlers"
 	"superaib/internal/api/middleware"
 	"superaib/internal/api/routes"
@@ -62,20 +63,33 @@ func main() {
 	); err != nil {
 		logger.Log.Fatalf("Failed to migrate models: %v", err)
 	}
+	// 🚨🚨🚨 QAYBTA CUSUB EE CODE-KA HADA! 🚨🚨🚨
+	// Liiska ENUM type-yada aad u baahan tahay inaad abuurto
+	enumDefinitions := map[string][]string{
+		"user_role":        {"developer", "admin", "user"},
+		"user_status":      {"active", "pending", "suspended"},
+		"account_plan":     {"free", "basic", "pro"},
+		"theme_preference": {"auto", "light", "dark"},
+	}
 
-	// 🚨🚨🚨 HALKAN WAA MEESHA MUHIIMKA AH EE AAD CODE-KA KU DARI DOONTO 🚨🚨🚨
-	// Abuur ENUM type-ka 'user_role' haddii uusan jirin
-	logger.Log.Info("Starting ENUM type creation...")
+	for enumName, values := range enumDefinitions {
+		// Hubi haddii ENUM-ku horey u jiray
+		var exists bool
+		db.DB.Raw("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = ?)", enumName).Scan(&exists)
 
-	// Amarrada SQL ee abuura ENUM-yada
-	// Hubi in 'db.DB.Exec' aad isticmaasho maadaama 'db' uu yahay wrapper, 'db.DB' ayaa ah GORM instance-ka dhabta ah
-	db.DB.Exec("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN CREATE TYPE user_role AS ENUM ('developer', 'admin', 'user'); END IF; END $$;")
-	db.DB.Exec("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN CREATE TYPE user_status AS ENUM ('active', 'pending', 'suspended'); END IF; END $$;")
-	db.DB.Exec("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_plan') THEN CREATE TYPE account_plan AS ENUM ('free', 'basic', 'pro'); END IF; END $$;")
-	db.DB.Exec("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'theme_preference') THEN CREATE TYPE theme_preference AS ENUM ('auto', 'light', 'dark'); END IF; END $$;")
-
-	logger.Log.Info("ENUM type creation completed.")
-	// 🚨🚨🚨 DHAMMAADKA QAYBTA AAD CODE-KA KU DARI DOONTO 🚨🚨🚨
+		if exists {
+			logger.Log.Infof("ENUM type '%s' already exists. Skipping creation.", enumName)
+		} else {
+			// Abuur ENUM type-ka
+			createEnumSQL := fmt.Sprintf("CREATE TYPE %s AS ENUM ('%s')", enumName, strings.Join(values, "','"))
+			if err := db.DB.Exec(createEnumSQL).Error; err != nil {
+				logger.Log.Fatalf("Failed to create ENUM type '%s': %v", enumName, err)
+			}
+			logger.Log.Infof("ENUM type '%s' created successfully.", enumName)
+		}
+	}
+	logger.Log.Info("ENUM type creation and validation completed.")
+	// 🚨🚨🚨 DHAMMAADKA QAYBTA CUSUB EE CODE-KA HADA! 🚨🚨🚨
 
 	logger.Log.Info("Database migration completed.")
 
