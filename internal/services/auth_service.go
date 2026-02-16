@@ -32,7 +32,6 @@ func NewAuthService(userRepo repo.UserRepository, cfg *config.Config) AuthServic
 		cfg:       cfg,
 	}
 }
-
 func (s *authService) Register(ctx context.Context, req *models.UserCreateRequest) (*models.User, string, error) {
 	if err := s.validator.Struct(req); err != nil {
 		return nil, "", fmt.Errorf("validation failed: %w", err)
@@ -55,7 +54,7 @@ func (s *authService) Register(ctx context.Context, req *models.UserCreateReques
 		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
-		Role:         models.RoleDeveloper,
+		Role:         req.Role, // ✅ Halkan ayaad ka beddeshaa! Hadda wuxuu ka qaadanayaa request-ka.
 		Status:       models.StatusPending,
 	}
 
