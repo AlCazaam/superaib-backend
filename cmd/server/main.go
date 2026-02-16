@@ -32,6 +32,34 @@ func main() {
 		logger.Log.Fatalf("Failed to initialize DB: %v", err)
 	}
 	defer db.Close()
+	// 🚨🚨🚨 HALKAN WAA MEESHA SAXDA AH EE AAD CODE-KA ENUM CREATION KU DARI DOONTO! 🚨🚨🚨
+	// (Ka hor inta uusan "Starting database migration..." iyo db.DB.AutoMigrate)
+	logger.Log.Info("Starting ENUM type creation and validation...")
+
+	enumDefinitions := map[string][]string{
+		// Hubi in values-ka ay sax yihiin sida ku jira `const` models-kaaga
+		"user_role":        {string(models.RoleDeveloper), string(models.RoleAdmin), string(models.RoleSupport)},
+		"user_status":      {string(models.StatusActive), string(models.StatusSuspended), string(models.StatusDeleted), string(models.StatusPending)},
+		"account_plan":     {string(models.PlanFree), string(models.PlanPro), string(models.PlanEnterprise)},
+		"theme_preference": {string(models.ThemeLight), string(models.ThemeDark), string(models.ThemeAuto)},
+	}
+
+	for enumName, values := range enumDefinitions {
+		var exists bool
+		db.DB.Raw("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = ?)", enumName).Scan(&exists)
+
+		if exists {
+			logger.Log.Infof("ENUM type '%s' already exists. Skipping creation.", enumName)
+		} else {
+			createEnumSQL := fmt.Sprintf("CREATE TYPE %s AS ENUM ('%s');", enumName, strings.Join(values, "','"))
+			if err := db.DB.Exec(createEnumSQL).Error; err != nil {
+				logger.Log.Fatalf("Failed to create ENUM type '%s': %v", enumName, err)
+			}
+			logger.Log.Infof("ENUM type '%s' created successfully.", enumName)
+		}
+	}
+	logger.Log.Info("ENUM type creation and validation completed.")
+	// 🚨🚨🚨 DHAMMAADKA QAYBTA CUSUB EE CODE-KA HADA! 🚨🚨🚨
 
 	// 2. Migrate & Seed
 	logger.Log.Info("Starting database migration...")
@@ -63,36 +91,6 @@ func main() {
 	); err != nil {
 		logger.Log.Fatalf("Failed to migrate models: %v", err)
 	}
-	// 🚨🚨🚨 HALKAN WAA MEESHA SAXDA AH EE AAD CODE-KA ENUM CREATION KU DARI DOONTO! 🚨🚨🚨
-	logger.Log.Info("Starting ENUM type creation and validation...")
-
-	// Liiska ENUM type-yada aad u baahan tahay inaad abuurto
-	enumDefinitions := map[string][]string{
-		// Hubi in values-ka ay sax yihiin sida ku jira `const` models-kaaga
-		"user_role":        {string(models.RoleDeveloper), string(models.RoleAdmin), string(models.RoleSupport)},
-		"user_status":      {string(models.StatusActive), string(models.StatusSuspended), string(models.StatusDeleted), string(models.StatusPending)},
-		"account_plan":     {string(models.PlanFree), string(models.PlanPro), string(models.PlanEnterprise)},
-		"theme_preference": {string(models.ThemeLight), string(models.ThemeDark), string(models.ThemeAuto)},
-	}
-
-	for enumName, values := range enumDefinitions {
-		// Hubi haddii ENUM-ku horey u jiray
-		var exists bool
-		db.DB.Raw("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = ?)", enumName).Scan(&exists)
-
-		if exists {
-			logger.Log.Infof("ENUM type '%s' already exists. Skipping creation.", enumName)
-		} else {
-			// Abuur ENUM type-ka
-			createEnumSQL := fmt.Sprintf("CREATE TYPE %s AS ENUM ('%s');", enumName, strings.Join(values, "','"))
-			if err := db.DB.Exec(createEnumSQL).Error; err != nil {
-				logger.Log.Fatalf("Failed to create ENUM type '%s': %v", enumName, err)
-			}
-			logger.Log.Infof("ENUM type '%s' created successfully.", enumName)
-		}
-	}
-	logger.Log.Info("ENUM type creation and validation completed.")
-	// 🚨🚨🚨 DHAMMAADKA QAYBTA CUSUB EE CODE-KA HADA! 🚨🚨🚨
 
 	// 2. Migrate & Seed
 	logger.Log.Info("Starting database migration...") // Tani hadda waxay bilowdaa ENUMs ka dib
