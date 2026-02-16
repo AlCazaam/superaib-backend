@@ -62,6 +62,21 @@ func main() {
 	); err != nil {
 		logger.Log.Fatalf("Failed to migrate models: %v", err)
 	}
+
+	// 🚨🚨🚨 HALKAN WAA MEESHA MUHIIMKA AH EE AAD CODE-KA KU DARI DOONTO 🚨🚨🚨
+	// Abuur ENUM type-ka 'user_role' haddii uusan jirin
+	logger.Log.Info("Starting ENUM type creation...")
+
+	// Amarrada SQL ee abuura ENUM-yada
+	// Hubi in 'db.DB.Exec' aad isticmaasho maadaama 'db' uu yahay wrapper, 'db.DB' ayaa ah GORM instance-ka dhabta ah
+	db.DB.Exec("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN CREATE TYPE user_role AS ENUM ('developer', 'admin', 'user'); END IF; END $$;")
+	db.DB.Exec("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN CREATE TYPE user_status AS ENUM ('active', 'pending', 'suspended'); END IF; END $$;")
+	db.DB.Exec("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_plan') THEN CREATE TYPE account_plan AS ENUM ('free', 'basic', 'pro'); END IF; END $$;")
+	db.DB.Exec("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'theme_preference') THEN CREATE TYPE theme_preference AS ENUM ('auto', 'light', 'dark'); END IF; END $$;")
+
+	logger.Log.Info("ENUM type creation completed.")
+	// 🚨🚨🚨 DHAMMAADKA QAYBTA AAD CODE-KA KU DARI DOONTO 🚨🚨🚨
+
 	logger.Log.Info("Database migration completed.")
 
 	models.SeedGlobalFeatures(db.DB)
