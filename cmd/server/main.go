@@ -63,13 +63,16 @@ func main() {
 	); err != nil {
 		logger.Log.Fatalf("Failed to migrate models: %v", err)
 	}
-	// 🚨🚨🚨 QAYBTA CUSUB EE CODE-KA HADA! 🚨🚨🚨
+	// 🚨🚨🚨 HALKAN WAA MEESHA SAXDA AH EE AAD CODE-KA ENUM CREATION KU DARI DOONTO! 🚨🚨🚨
+	logger.Log.Info("Starting ENUM type creation and validation...")
+
 	// Liiska ENUM type-yada aad u baahan tahay inaad abuurto
 	enumDefinitions := map[string][]string{
-		"user_role":        {"developer", "admin", "user"},
-		"user_status":      {"active", "pending", "suspended"},
-		"account_plan":     {"free", "basic", "pro"},
-		"theme_preference": {"auto", "light", "dark"},
+		// Hubi in values-ka ay sax yihiin sida ku jira `const` models-kaaga
+		"user_role":        {string(models.RoleDeveloper), string(models.RoleAdmin), string(models.RoleSupport)},
+		"user_status":      {string(models.StatusActive), string(models.StatusSuspended), string(models.StatusDeleted), string(models.StatusPending)},
+		"account_plan":     {string(models.PlanFree), string(models.PlanPro), string(models.PlanEnterprise)},
+		"theme_preference": {string(models.ThemeLight), string(models.ThemeDark), string(models.ThemeAuto)},
 	}
 
 	for enumName, values := range enumDefinitions {
@@ -81,7 +84,7 @@ func main() {
 			logger.Log.Infof("ENUM type '%s' already exists. Skipping creation.", enumName)
 		} else {
 			// Abuur ENUM type-ka
-			createEnumSQL := fmt.Sprintf("CREATE TYPE %s AS ENUM ('%s')", enumName, strings.Join(values, "','"))
+			createEnumSQL := fmt.Sprintf("CREATE TYPE %s AS ENUM ('%s');", enumName, strings.Join(values, "','"))
 			if err := db.DB.Exec(createEnumSQL).Error; err != nil {
 				logger.Log.Fatalf("Failed to create ENUM type '%s': %v", enumName, err)
 			}
@@ -90,6 +93,20 @@ func main() {
 	}
 	logger.Log.Info("ENUM type creation and validation completed.")
 	// 🚨🚨🚨 DHAMMAADKA QAYBTA CUSUB EE CODE-KA HADA! 🚨🚨🚨
+
+	// 2. Migrate & Seed
+	logger.Log.Info("Starting database migration...") // Tani hadda waxay bilowdaa ENUMs ka dib
+	if err := db.DB.AutoMigrate(
+		&models.User{},
+		&models.Project{},
+		// ... inta kale ee models-kaaga ...
+	); err != nil {
+		logger.Log.Fatalf("Failed to migrate models: %v", err)
+	}
+	logger.Log.Info("Database migration completed.")
+
+	models.SeedGlobalFeatures(db.DB)
+	logger.Log.Info("✅ Global features seeded successfully.")
 
 	logger.Log.Info("Database migration completed.")
 
