@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os" // 👈 KAN AYAAN KU DARNAY SI UU PORT-KA U AQRIYO
 	"strings"
 	"superaib/internal/api/handlers"
 	"superaib/internal/api/middleware"
@@ -236,8 +237,13 @@ func main() {
 	})
 	handler := c.Handler(router)
 
-	// 10. Server Start
-	address := fmt.Sprintf("%s:%s", cfg.ServerHost, cfg.ServerPort)
+	// 10. Server Start (RENDER PORT FIX - Halkan ayaa la bedelay!)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Hadii aad Local ku run garaynayso wuxuu noqon 8080
+	}
+
+	address := "0.0.0.0:" + port
 	logger.Log.Infof("🚀 SuperAIB Backend is live at http://%s", address)
 
 	server := &http.Server{
