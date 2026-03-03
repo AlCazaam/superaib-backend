@@ -228,12 +228,13 @@ func main() {
 
 	// 9. CORS SETUP
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"}, // Fasax dhamaan requests-ka yimaada
+		// 🚨 AllowOriginFunc waxay si toos ah u fasaxaysaa cid kasta (Sida Flutter Web)
+		AllowOriginFunc:  func(origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:   []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "X-Requested-With", "x-api-key", "If-Match", "ETag"},
 		ExposedHeaders:   []string{"ETag", "If-Match"},
 		AllowCredentials: true,
-		Debug:            true, // 👈 Kani waa muhiim si aad log-ga u aragto
+		Debug:            true, // Waxay ku tusi doontaa log-ga haddii CORS uu dhaco
 	})
 	handler := c.Handler(router)
 
