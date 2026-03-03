@@ -32,12 +32,11 @@ func main() {
 		logger.Log.Fatalf("Failed to initialize DB: %v", err)
 	}
 	defer db.Close()
-	// 🚨🚨🚨 HALKAN WAA MEESHA SAXDA AH EE AAD CODE-KA ENUM CREATION KU DARI DOONTO! 🚨🚨🚨
-	// (Ka hor inta uusan "Starting database migration..." iyo db.DB.AutoMigrate)
+
+	// 🚨 ENUM CREATION 🚨
 	logger.Log.Info("Starting ENUM type creation and validation...")
 
 	enumDefinitions := map[string][]string{
-		// Hubi in values-ka ay sax yihiin sida ku jira `const` models-kaaga
 		"user_role":        {string(models.RoleDeveloper), string(models.RoleAdmin), string(models.RoleSupport)},
 		"user_status":      {string(models.StatusActive), string(models.StatusSuspended), string(models.StatusDeleted), string(models.StatusPending)},
 		"account_plan":     {string(models.PlanFree), string(models.PlanPro), string(models.PlanEnterprise)},
@@ -59,9 +58,8 @@ func main() {
 		}
 	}
 	logger.Log.Info("ENUM type creation and validation completed.")
-	// 🚨🚨🚨 DHAMMAADKA QAYBTA CUSUB EE CODE-KA HADA! 🚨🚨🚨
 
-	// 2. Migrate & Seed
+	// 2. Migrate & Seed (Waa la nadiifiyay, hal mar ayuu shaqaynayaa)
 	logger.Log.Info("Starting database migration...")
 	if err := db.DB.AutoMigrate(
 		&models.User{},
@@ -91,23 +89,9 @@ func main() {
 	); err != nil {
 		logger.Log.Fatalf("Failed to migrate models: %v", err)
 	}
-
-	// 2. Migrate & Seed
-	logger.Log.Info("Starting database migration...") // Tani hadda waxay bilowdaa ENUMs ka dib
-	if err := db.DB.AutoMigrate(
-		&models.User{},
-		&models.Project{},
-		// ... inta kale ee models-kaaga ...
-	); err != nil {
-		logger.Log.Fatalf("Failed to migrate models: %v", err)
-	}
 	logger.Log.Info("Database migration completed.")
 
-	models.SeedGlobalFeatures(db.DB)
-	logger.Log.Info("✅ Global features seeded successfully.")
-
-	logger.Log.Info("Database migration completed.")
-
+	// Seed Features
 	models.SeedGlobalFeatures(db.DB)
 	logger.Log.Info("✅ Global features seeded successfully.")
 
@@ -159,6 +143,7 @@ func main() {
 	subscriptionService := services.NewSubscriptionService(db.DB, transactionRepo, projectRepo)
 	realtimeHandler := handlers.NewRealtimeHandler(realtimeService)
 	noteService := services.NewNotificationService(noteRepo, pushConfigRepo, analyticsTracker, usageService, realtimeHandler)
+
 	// 🚀 KICI SCHEDULER-KA (Background Worker)
 	noteService.StartScheduler(context.Background())
 
@@ -242,12 +227,12 @@ func main() {
 
 	// 9. CORS SETUP
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{"*"}, // Fasax dhamaan requests-ka yimaada
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:   []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "X-Requested-With", "x-api-key", "If-Match", "ETag"},
 		ExposedHeaders:   []string{"ETag", "If-Match"},
 		AllowCredentials: true,
-		Debug:            false,
+		Debug:            true, // 👈 Kani waa muhiim si aad log-ga u aragto
 	})
 	handler := c.Handler(router)
 
